@@ -9,7 +9,7 @@ use std::io::prelude::*;
 fn main() {
     let mut app = Cursive::default();
 
-    app.set_user_data(Data { key: String::new()});
+    app.set_user_data(Data { key: String::new() });
 
     main_menu(&mut app);
     check_for_key(&mut app);
@@ -76,7 +76,7 @@ fn check_for_key(app: &mut Cursive) {
 
         app.add_layer(dialog);
     } else {
-        // If we do find a key, put it in data storage
+        // If we do find a key, put it in user storage
         let fields: Vec<&str>  = buffer.split(":").collect();
 
         let key_slice = fields[fields.len() - 1];
@@ -102,7 +102,7 @@ fn check_for_key(app: &mut Cursive) {
             panic!("Couldn't write key to file: {:?}", why);
         }
 
-        // Save key in stored data
+        // Save key in user data
         app.with_user_data(|data: &mut Data| {
             data.key = format!{"{}", key};
         });
