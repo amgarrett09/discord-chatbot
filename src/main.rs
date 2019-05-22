@@ -9,30 +9,36 @@ use std::io::prelude::*;
 fn main() {
     let mut app = Cursive::default();
 
+    app.set_user_data(Data { key: String::new()});
+
     main_menu(&mut app);
     check_for_key(&mut app);
 
     app.run();
 }
 
+struct Data {
+    key: String
+}
+
 fn check_for_key(app: &mut Cursive) {
     let path = Path::new("key.cfg");
 
     // Buffer for key config file contents
-    let mut s = String::new();
+    let mut buffer = String::new();
 
     // Try to open key config file and read from it, if it exists
     let file = File::open(&path);
     if let Ok(f) = file {
         let mut file = f;
 
-        if let Err(why) = file.read_to_string(&mut s) {
+        if let Err(why) = file.read_to_string(&mut buffer) {
             panic!("Couldn't read from key config file: {:?}", why);
         }
     }
 
     // If we didn't find a key
-    if !s.contains(":") {
+    if !buffer.contains(":") {
         let edit_name = EditView::new()
             .with_id("app_name");
 
@@ -69,6 +75,17 @@ fn check_for_key(app: &mut Cursive) {
             .button("Quit", Cursive::quit);
 
         app.add_layer(dialog);
+    } else {
+        // If we do find a key, put it in data storage
+        let fields: Vec<&str>  = buffer.split(":").collect();
+
+        let key_slice = fields[fields.len() - 1];
+
+        let key = format!{"{}", key_slice.trim()};
+
+        app.with_user_data(|data: &mut Data| {
+            data.key = key;
+        });
     }
 
     // Private function which runs when we hit "Okay" on the dialog above
@@ -84,6 +101,11 @@ fn check_for_key(app: &mut Cursive) {
         if let Err(why) = file.write_all(s.as_bytes()) {
             panic!("Couldn't write key to file: {:?}", why);
         }
+
+        // Save key in stored data
+        app.with_user_data(|data: &mut Data| {
+            data.key = format!{"{}", key};
+        });
 
         app.pop_layer();
 
