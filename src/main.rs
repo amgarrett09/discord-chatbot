@@ -18,34 +18,20 @@ fn main() {
 fn check_for_key(app: &mut Cursive) {
     let path = Path::new("key.cfg");
 
-    let mut created = false;
-
-    // Get or create a config file to store the application key
-    let mut file = match File::open(&path) {
-        Ok(file) => file,
-        Err(_) => match File::create(&path) {
-            Ok(file) => {
-                created = true;
-                file
-            }
-            Err(why) => panic!("Couldn't create a file to store application key:\
-                {:?}", why)
-        }
-    };
-
+    // Buffer for key config file contents
     let mut s = String::new();
 
-    // If we already had a config file, try to read from it
-    if !created {
+    // Try to open key config file and read from it, if it exists
+    let file = File::open(&path);
+    if let Ok(f) = file {
+        let mut file = f;
+
         if let Err(why) = file.read_to_string(&mut s) {
             panic!("Couldn't read from key config file: {:?}", why);
         }
     }
 
-    // Close the key file for now
-    drop(file);
-
-    // If there's a not a key in the file already
+    // If we didn't find a key
     if !s.contains(":") {
         let edit_name = EditView::new()
             .with_id("app_name");
