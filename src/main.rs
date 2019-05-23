@@ -67,7 +67,6 @@ fn check_for_key(app: &mut Cursive) {
 
         let layout = LinearLayout::vertical()
             .child(text1)
-            .child(DummyView)
             .child(edit_name)
             .child(DummyView)
             .child(TextView::new("Enter the application key:"))
