@@ -1,3 +1,5 @@
+mod bot;
+
 use cursive::Cursive;
 use cursive::views::{Dialog, LinearLayout, DummyView, TextView, EditView};
 use cursive::traits::*;
@@ -5,13 +7,25 @@ use cursive::traits::*;
 use std::path::Path;
 use std::fs::File;
 use std::io::prelude::*;
+use std::thread;
+use std::sync::mpsc;
 
 fn main() {
     let mut app = Cursive::default();
 
     app.set_user_data(Data { key: String::new() });
 
-    main_menu(&mut app);
+    // Sender goes to backend thread. Messages travel backend -> frontend.
+    let (txb, _): (mpsc::Sender<String>, mpsc::Receiver<String>) = mpsc::channel();
+
+    // Receiver goes to backend thread. Messages travel frontend -> backend.
+    let (txf, rxb): (mpsc::Sender<String>, mpsc::Receiver<String>) = mpsc::channel();
+
+    thread::spawn(move || {
+        bot::run_bot(&txb, &rxb);
+    });
+
+    main_menu(&mut app, txf);
     check_for_key(&mut app);
 
     app.run();
@@ -116,10 +130,13 @@ fn check_for_key(app: &mut Cursive) {
     }
 }
 
-fn main_menu(app: &mut Cursive) {
+fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
     let dialog = Dialog::text("When you're ready to launch, hit the button...")
         .title("Welcome")
-        .button("Launch bot", |_| ())
+        .button("Launch bot", move |a| {
+            let key = &a.user_data::<Data>().unwrap().key;
+            tx.send(key.to_string()).unwrap();
+        })
         .button("Quit", Cursive::quit);
 
     app.add_layer(dialog);
