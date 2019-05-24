@@ -11,15 +11,13 @@ use cursive::Cursive;
 
 struct Handler;
 
-impl EventHandler for Handler {
-}
+impl EventHandler for Handler {}
 
 fn send_error_message(msg: &'static str, cb_sink: &cursive::CbSink) {
     let err_msg = String::from(msg);
-    cb_sink.send(Box::new(|a: &mut Cursive| {
-        a.add_layer(Dialog::text(err_msg)
-            .button("Quit", Cursive::quit));
-    })).unwrap();
+    let _ = cb_sink.send(Box::new(|a: &mut Cursive| {
+        a.add_layer(Dialog::text(err_msg).button("Quit", Cursive::quit));
+    }));
 }
 
 pub fn run_bot(_tx: &mpsc::Sender<String>, rx: &mpsc::Receiver<String>, cb_sink: cursive::CbSink) {
@@ -39,10 +37,11 @@ pub fn run_bot(_tx: &mpsc::Sender<String>, rx: &mpsc::Receiver<String>, cb_sink:
 
     let mut client = Client::new(&token, Handler).expect("Failed to create client");
 
-    client.with_framework(StandardFramework::new()
-        .configure(|c| c
-            .prefix("!"))
-        .command("ping", |c| c.cmd(commands::standard::ping)));
+    client.with_framework(
+        StandardFramework::new()
+            .configure(|c| c.prefix("!"))
+            .command("ping", |c| c.cmd(commands::standard::ping)),
+    );
 
     if client.start().is_err() {
         send_error_message("Error: failed to start client.", &cb_sink);

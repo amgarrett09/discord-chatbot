@@ -1,9 +1,10 @@
 mod bot;
 
-#[macro_use] extern crate serenity;
+#[macro_use]
+extern crate serenity;
 
 use cursive::traits::*;
-use cursive::views::{Dialog, DummyView, EditView, LinearLayout, TextView};
+use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, TextView};
 use cursive::Cursive;
 
 use std::fs::File;
@@ -135,13 +136,21 @@ fn check_for_token(app: &mut Cursive) {
 }
 
 fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
-    let dialog = Dialog::text("When you're ready to launch, hit the button...")
-        .title("Welcome")
-        .button("Launch bot", move |a| {
-            let token = &a.user_data::<Data>().unwrap().token;
-            tx.send(token.to_string()).unwrap();
-        })
-        .button("Quit", Cursive::quit);
+    let launch = Button::new("Launch bot", move |a| {
+        let token = &a.user_data::<Data>().unwrap().token;
+        tx.send(token.to_string()).unwrap();
+    });
+
+    let configure = Button::new("Configure", |_| ());
+
+    let layout = LinearLayout::vertical()
+        .child(launch)
+        .child(DummyView)
+        .child(configure)
+        .child(DummyView)
+        .child(Button::new("Quit", Cursive::quit));
+
+    let dialog = Dialog::around(layout).title("Welcome");
 
     app.add_layer(dialog);
 }
