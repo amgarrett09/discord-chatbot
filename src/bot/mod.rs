@@ -1,7 +1,9 @@
+mod commands;
+
 use std::sync::mpsc;
 
 use serenity::client;
-use serenity::model::channel::Message;
+use serenity::framework::StandardFramework;
 use serenity::prelude::*;
 
 use cursive::views::Dialog;
@@ -10,13 +12,6 @@ use cursive::Cursive;
 struct Handler;
 
 impl EventHandler for Handler {
-    fn message(&self, _: Context, msg: Message) {
-        if msg.content == "!ping" {
-            if let Err(why) = msg.channel_id.say("Pong!") {
-                eprintln!("Error sending message: {:?}", why);
-            }
-        }
-    }
 }
 
 fn send_error_message(msg: &'static str, cb_sink: &cursive::CbSink) {
@@ -43,6 +38,11 @@ pub fn run_bot(_tx: &mpsc::Sender<String>, rx: &mpsc::Receiver<String>, cb_sink:
     }
 
     let mut client = Client::new(&token, Handler).expect("Failed to create client");
+
+    client.with_framework(StandardFramework::new()
+        .configure(|c| c
+            .prefix("!"))
+        .command("ping", |c| c.cmd(commands::standard::ping)));
 
     if client.start().is_err() {
         send_error_message("Error: failed to start client.", &cb_sink);

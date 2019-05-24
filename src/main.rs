@@ -1,5 +1,7 @@
 mod bot;
 
+#[macro_use] extern crate serenity;
+
 use cursive::traits::*;
 use cursive::views::{Dialog, DummyView, EditView, LinearLayout, TextView};
 use cursive::Cursive;
