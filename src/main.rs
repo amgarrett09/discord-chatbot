@@ -169,7 +169,7 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
     app.add_layer(dialog);
 }
 
-fn load_configuration<'a>(app: &mut Cursive) {
+fn load_configuration(app: &mut Cursive) {
     let path = Path::new("options.cfg");
     let mut buffer = String::new();
     let maybe_file = File::open(&path);
