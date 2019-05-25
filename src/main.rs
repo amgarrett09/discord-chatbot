@@ -7,6 +7,7 @@ use cursive::traits::*;
 use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, TextView};
 use cursive::Cursive;
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -16,8 +17,15 @@ use std::thread;
 fn main() {
     let mut app = Cursive::default();
 
+    // Initialize bot options
+    let mut options = HashMap::new();
+    for op in VALID_OPTIONS.iter() {
+        options.insert(op.to_string(), false);
+    }
+
     app.set_user_data(Data {
         token: String::new(),
+        options: options,
     });
 
     // Sender goes to backend thread. Messages travel backend -> frontend.
@@ -32,14 +40,20 @@ fn main() {
         bot::run_bot(&txb, &rxb, cb_sink);
     });
 
+    load_configuration(&mut app);
     main_menu(&mut app, txf);
     check_for_token(&mut app);
 
     app.run();
 }
 
+// A list of valid names of options so we can add new ones without changing code
+// in a bunch of places
+const VALID_OPTIONS: [&'static str; 1] = ["profanity_filter"];
+
 struct Data {
     token: String,
+    options: HashMap<String, bool>,
 }
 
 fn check_for_token(app: &mut Cursive) {
@@ -153,4 +167,75 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
     let dialog = Dialog::around(layout).title("Welcome");
 
     app.add_layer(dialog);
+}
+
+fn load_configuration<'a>(app: &mut Cursive) {
+    let path = Path::new("options.cfg");
+    let mut buffer = String::new();
+    let maybe_file = File::open(&path);
+
+    if let Ok(file) = maybe_file {
+        let mut file = file;
+        if file.read_to_string(&mut buffer).is_err() {
+            buffer = String::from("");
+        }
+    }
+
+    // Set default options if they are missing from options file or if file is missing
+    let mut output: Vec<String> = vec![buffer.clone()];
+
+    for option in VALID_OPTIONS.iter() {
+        let key = format!("{}: ", option);
+
+        if !buffer.contains(&key) {
+            output.push(format!("\n{}disabled", key));
+        }
+    }
+
+    let content = output.join(";");
+
+    // If we had to add options, write them to file
+    if output.len() > 1 {
+        let mut out_file = match File::create(&path) {
+            Ok(file) => file,
+            Err(why) => panic!("Couldn't create options file: {:?}", why),
+        };
+
+        if let Err(why) = out_file.write_all(content.as_bytes()) {
+            panic!("Couldn't write to options file: {:?}", why);
+        }
+    }
+
+    // Read options and prepare to store settings in user data
+    let user_data = &mut app.user_data::<Data>().unwrap();
+    let file_entries = content.split(";");
+
+    // Split each file entry into key-value pair
+    let pairs = file_entries.map(|entry| {
+        let mut elements = entry.split(":");
+
+        // Making sure each pair has two elements
+        let key = match elements.next() {
+            Some(key) => key.trim(),
+            None => "",
+        };
+
+        let value = match elements.next() {
+            Some(value) => value.trim(),
+            None => "",
+        };
+
+        let pair = (key, value);
+        pair
+    });
+
+    for pair in pairs {
+        let (key, value) = pair;
+        let bool_value = if value == "enabled" { true } else { false };
+
+        // Update option value if key is valid
+        if user_data.options.contains_key(key) {
+            user_data.options.insert(key.to_string(), bool_value);
+        }
+    }
 }
