@@ -4,7 +4,7 @@ mod bot;
 extern crate serenity;
 
 use cursive::traits::*;
-use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, TextView};
+use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
 use cursive::Cursive;
 
 use std::collections::HashMap;
@@ -14,18 +14,22 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 
+// A list of valid names of modules so we can add new ones without changing code
+// in a bunch of places
+const VALID_MODULES: [&'static str; 1] = ["profanity_filter"];
+
 fn main() {
     let mut app = Cursive::default();
 
-    // Initialize bot options
-    let mut options = HashMap::new();
-    for op in VALID_OPTIONS.iter() {
-        options.insert(op.to_string(), false);
+    // Initialize bot module settings
+    let mut modules = HashMap::new();
+    for md in VALID_MODULES.iter() {
+        modules.insert(md.to_string(), false);
     }
 
     app.set_user_data(Data {
         token: String::new(),
-        options: options,
+        modules: modules,
     });
 
     // Sender goes to backend thread. Messages travel backend -> frontend.
@@ -47,13 +51,9 @@ fn main() {
     app.run();
 }
 
-// A list of valid names of options so we can add new ones without changing code
-// in a bunch of places
-const VALID_OPTIONS: [&'static str; 1] = ["profanity_filter"];
-
 struct Data {
     token: String,
-    options: HashMap<String, bool>,
+    modules: HashMap<String, bool>,
 }
 
 fn check_for_token(app: &mut Cursive) {
@@ -155,7 +155,9 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
         tx.send(token.to_string()).unwrap();
     });
 
-    let configure = Button::new("Configure", |_| ());
+    let configure = Button::new("Configure", |a| {
+        configuration(a);
+    });
 
     let layout = LinearLayout::vertical()
         .child(launch)
@@ -170,7 +172,7 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
 }
 
 fn load_configuration(app: &mut Cursive) {
-    let path = Path::new("options.cfg");
+    let path = Path::new("modules.cfg");
     let mut buffer = String::new();
     let maybe_file = File::open(&path);
 
@@ -181,11 +183,11 @@ fn load_configuration(app: &mut Cursive) {
         }
     }
 
-    // Set default options if they are missing from options file or if file is missing
+    // Set default settings if they are missing from modules file or if file is missing
     let mut output: Vec<String> = vec![buffer.clone()];
 
-    for option in VALID_OPTIONS.iter() {
-        let key = format!("{}: ", option);
+    for module in VALID_MODULES.iter() {
+        let key = format!("{}: ", module);
 
         if !buffer.contains(&key) {
             output.push(format!("\n{}disabled", key));
@@ -194,19 +196,19 @@ fn load_configuration(app: &mut Cursive) {
 
     let content = output.join(";");
 
-    // If we had to add options, write them to file
+    // If we had to add settings, write them to file
     if output.len() > 1 {
         let mut out_file = match File::create(&path) {
             Ok(file) => file,
-            Err(why) => panic!("Couldn't create options file: {:?}", why),
+            Err(why) => panic!("Couldn't create modules file: {:?}", why),
         };
 
         if let Err(why) = out_file.write_all(content.as_bytes()) {
-            panic!("Couldn't write to options file: {:?}", why);
+            panic!("Couldn't write to modules file: {:?}", why);
         }
     }
 
-    // Read options and prepare to store settings in user data
+    // Read module settings and prepare to store settings in user data
     let user_data = &mut app.user_data::<Data>().unwrap();
     let file_entries = content.split(";");
 
@@ -233,9 +235,38 @@ fn load_configuration(app: &mut Cursive) {
         let (key, value) = pair;
         let bool_value = if value == "enabled" { true } else { false };
 
-        // Update option value if key is valid
-        if user_data.options.contains_key(key) {
-            user_data.options.insert(key.to_string(), bool_value);
+        // Update module setting if key is valid
+        if user_data.modules.contains_key(key) {
+            user_data.modules.insert(key.to_string(), bool_value);
         }
     }
+}
+
+fn configuration(app: &mut Cursive) {
+    let modules = &app.user_data::<Data>().unwrap().modules;
+
+    let mut select_modules: SelectView<usize> = SelectView::new();
+
+    for (i, md) in VALID_MODULES.iter().enumerate() {
+        let bool_value = match modules.get(&md.to_string()) {
+            Some(val) => *val,
+            None => false,
+        };
+
+        let value = if bool_value { "enabled" } else { "disabled" };
+
+        let text = format!("{}: {}", &md, &value);
+
+        // The index "i" will be used to reference the corrsponding views
+        // for each module
+        select_modules.add_item(text, i);
+    }
+
+    app.add_layer(
+        Dialog::around(select_modules)
+            .title("Bot configuration")
+            .button("Back", |a| {
+                a.pop_layer();
+            }),
+    );
 }
