@@ -1,4 +1,4 @@
-use cursive::views::{Button, Dialog, TextArea, LinearLayout, TextView, DummyView};
+use cursive::views::{Button, Dialog, DummyView, LinearLayout, TextArea, TextView};
 
 // Function that returns the front-end config view
 pub fn init_view() -> Dialog {

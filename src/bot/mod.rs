@@ -1,5 +1,5 @@
-pub mod profanity_filter;
 mod commands;
+pub mod profanity_filter;
 
 use std::sync::mpsc;
 
