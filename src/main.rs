@@ -4,7 +4,7 @@ mod bot;
 extern crate serenity;
 
 use cursive::traits::*;
-use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, SelectView, TextView};
+use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, TextView};
 use cursive::Cursive;
 
 use std::collections::HashMap;
@@ -14,9 +14,14 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 
-// A list of valid names of modules so we can add new ones without changing code
-// in a bunch of places
-const VALID_MODULES: [&'static str; 1] = ["profanity_filter"];
+use bot::profanity_filter;
+use chatbot_macros::register_modules;
+
+// Enter the names of bot modules, without quotes, separated by spaces.
+// This translates into a constant array called VALID_MODULES and a function which
+// generates configuration views for each module. This makes adding new modules
+// to this app relatively simple.
+register_modules!(profanity_filter);
 
 fn main() {
     let mut app = Cursive::default();
@@ -245,25 +250,30 @@ fn load_configuration(app: &mut Cursive) {
 fn configuration(app: &mut Cursive) {
     let modules = &app.user_data::<Data>().unwrap().modules;
 
-    let mut select_modules: SelectView<usize> = SelectView::new();
+    let mut config_buttons = LinearLayout::vertical();
 
-    for (i, md) in VALID_MODULES.iter().enumerate() {
-        let bool_value = match modules.get(&md.to_string()) {
-            Some(val) => *val,
-            None => false,
-        };
+    let profanity_filter_status = match modules.get("profanity_filter") {
+        Some(status) => {
+            if *status {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        }
+        _ => "disabled",
+    };
 
-        let value = if bool_value { "enabled" } else { "disabled" };
+    let profanity_filter_button = Button::new(
+        format!("profanity_filter: {}", profanity_filter_status),
+        |a| {
+            a.add_layer(profanity_filter::init_view());
+        },
+    );
 
-        let text = format!("{}: {}", &md, &value);
-
-        // The index "i" will be used to reference the corrsponding views
-        // for each module
-        select_modules.add_item(text, i);
-    }
+    config_buttons.add_child(profanity_filter_button);
 
     app.add_layer(
-        Dialog::around(select_modules)
+        Dialog::around(config_buttons)
             .title("Bot configuration")
             .button("Back", |a| {
                 a.pop_layer();

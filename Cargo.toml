@@ -1,5 +1,5 @@
 [package]
-name = "rust-chatbot"
+name = "rust_chatbot"
 version = "0.1.0"
 authors = ["Alex Garrett <agarrettR8@gmail.com>"]
 edition = "2018"
@@ -7,6 +7,8 @@ edition = "2018"
 [dependencies]
 cursive = "0.12"
 serenity = "0.5.14"
+chatbot_macros = { path = "./chatbot_macros" }
 
 [patch.crates-io]
 openssl = { git = "https://github.com/ishitatsuyuki/rust-openssl", branch = "0.9.x" }
+

@@ -1,0 +1,10 @@
+[package]
+name = "chatbot_macros"
+version = "0.1.0"
+authors = ["Alex Garrett <agarrettR8@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+
+[lib]
+proc-macro = true
