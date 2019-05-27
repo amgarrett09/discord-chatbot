@@ -18,9 +18,8 @@ use bot::profanity_filter;
 use chatbot_macros::register_modules;
 
 // Enter the names of bot modules, without quotes, separated by spaces.
-// This translates into a constant array called VALID_MODULES and a function which
-// generates configuration views for each module. This makes adding new modules
-// to this app relatively simple.
+// This translates into a constant array called VALID_MODULES and a function called
+// "configuration" which generates the module configuration view.
 register_modules!(profanity_filter);
 
 fn main() {
@@ -245,38 +244,4 @@ fn load_configuration(app: &mut Cursive) {
             user_data.modules.insert(key.to_string(), bool_value);
         }
     }
-}
-
-fn configuration(app: &mut Cursive) {
-    let modules = &app.user_data::<Data>().unwrap().modules;
-
-    let mut config_buttons = LinearLayout::vertical();
-
-    let profanity_filter_status = match modules.get("profanity_filter") {
-        Some(status) => {
-            if *status {
-                "enabled"
-            } else {
-                "disabled"
-            }
-        }
-        _ => "disabled",
-    };
-
-    let profanity_filter_button = Button::new(
-        format!("profanity_filter: {}", profanity_filter_status),
-        |a| {
-            a.add_layer(profanity_filter::init_view());
-        },
-    );
-
-    config_buttons.add_child(profanity_filter_button);
-
-    app.add_layer(
-        Dialog::around(config_buttons)
-            .title("Bot configuration")
-            .button("Back", |a| {
-                a.pop_layer();
-            }),
-    );
 }
