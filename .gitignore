@@ -1,3 +1,4 @@
 /target
+/chatbot_macros/target
 **/*.rs.bk
 **/*.cfg
