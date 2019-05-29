@@ -28,4 +28,8 @@ pub fn init_view() -> Dialog {
         .child(words_layout);
 
     Dialog::around(main_layout).title("Profanity filter configuration")
+        .button("Save", |_| ())
+        .button("Cancel", |a| {
+            a.pop_layer();
+        })
 }

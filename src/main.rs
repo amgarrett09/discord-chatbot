@@ -102,11 +102,11 @@ fn check_for_token(app: &mut Cursive) {
             .button("Ok", |a| {
                 let name = a
                     .call_on_id("app_name", |view: &mut EditView| view.get_content())
-                    .unwrap();
+                    .expect("Expected edit view for app name to exist.");
 
                 let token = a
                     .call_on_id("token", |view: &mut EditView| view.get_content())
-                    .unwrap();
+                    .expect("Expected edit view for token to exist.");
 
                 ok(a, &name, &token);
             })
@@ -155,8 +155,10 @@ fn check_for_token(app: &mut Cursive) {
 
 fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
     let launch = Button::new("Launch bot", move |a| {
-        let token = &a.user_data::<Data>().unwrap().token;
-        tx.send(token.to_string()).unwrap();
+        let token = &a.user_data::<Data>().expect("Expected user data to exist.").token;
+        if let Err(why) = tx.send(token.to_string()) {
+            panic!("Couldn't send token to bot thread: {:?}", why);
+        }
     });
 
     let configure = Button::new("Configure", |a| {
@@ -213,7 +215,7 @@ fn load_configuration(app: &mut Cursive) {
     }
 
     // Read module settings and prepare to store settings in user data
-    let user_data = &mut app.user_data::<Data>().unwrap();
+    let user_data = &mut app.user_data::<Data>().expect("Expected user data to exist");
     let file_entries = content.split(";");
 
     // Split each file entry into key-value pair

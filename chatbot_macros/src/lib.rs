@@ -4,7 +4,10 @@ use proc_macro::TokenStream;
 #[proc_macro]
 pub fn register_modules(items: TokenStream) -> TokenStream {
     let s = items.to_string();
-    let names: Vec<&str> = s.split(" ").collect();
+
+    // Parse tokens into args
+    let names_iter = s.split(",");
+    let names: Vec<&str>  = names_iter.map(|name| name.trim()).collect();
 
     let quoted: Vec<String> = names.iter().map(|name| format!("\"{}\"", name)).collect();
 
@@ -62,5 +65,8 @@ pub fn register_modules(items: TokenStream) -> TokenStream {
 
     let out = format!("{}\n{}", module_const, config_function);
 
-    out.parse().unwrap()
+    match out.parse() {
+        Ok(stream) => stream,
+        Err(why) => panic!("Syntax error in proc macro: {:?}", why)
+    }
 }
