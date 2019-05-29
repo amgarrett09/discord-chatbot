@@ -33,3 +33,4 @@ pub fn init_view() -> Dialog {
             a.pop_layer();
         })
 }
+

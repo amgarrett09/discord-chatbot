@@ -1,4 +1,5 @@
 mod bot;
+mod util;
 
 #[macro_use]
 extern crate serenity;
@@ -8,9 +9,6 @@ use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, TextView
 use cursive::Cursive;
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 
@@ -21,6 +19,9 @@ use chatbot_macros::register_modules;
 // This translates into a constant array called VALID_MODULES and a function called
 // "configuration" which generates the module configuration view.
 register_modules!(profanity_filter);
+
+const TOKENS_FILE_PATH: &'static str = "tokens.cfg";
+const MODULE_CONFIG_PATH: &'static str = "modules.cfg";
 
 fn main() {
     let mut app = Cursive::default();
@@ -61,20 +62,11 @@ struct Data {
 }
 
 fn check_for_token(app: &mut Cursive) {
-    let path = Path::new("tokens.cfg");
-
-    // Buffer for token config file contents
-    let mut buffer = String::new();
-
     // Try to open token config file and read from it, if it exists
-    let file = File::open(&path);
-    if let Ok(f) = file {
-        let mut file = f;
-
-        if let Err(why) = file.read_to_string(&mut buffer) {
-            panic!("Couldn't read from token config file: {:?}", why);
-        }
-    }
+    let buffer = match util::get_file_contents(TOKENS_FILE_PATH) {
+        Ok(s) => s,
+        _ => String::new()
+    };
 
     // If we didn't find a token
     if !buffer.contains(":") {
@@ -130,14 +122,8 @@ fn check_for_token(app: &mut Cursive) {
     fn ok(app: &mut Cursive, name: &str, token: &str) {
         let s: String = format!("{}: {}\n", name, token);
 
-        let path = Path::new("tokens.cfg");
-        let mut file = match File::create(&path) {
-            Ok(file) => file,
-            Err(why) => panic!("Couldn't open token config file: {:?}", why),
-        };
-
-        if let Err(why) = file.write_all(s.as_bytes()) {
-            panic!("Couldn't write token to file: {:?}", why);
+        if let Err(why) = util::write_to_file(TOKENS_FILE_PATH, &s) {
+            panic!("Couldn't write to tokens config file: {:?}", why);
         }
 
         // Save token in user data
@@ -178,16 +164,10 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
 }
 
 fn load_configuration(app: &mut Cursive) {
-    let path = Path::new("modules.cfg");
-    let mut buffer = String::new();
-    let maybe_file = File::open(&path);
-
-    if let Ok(file) = maybe_file {
-        let mut file = file;
-        if file.read_to_string(&mut buffer).is_err() {
-            buffer = String::from("");
-        }
-    }
+    let buffer = match util::get_file_contents(MODULE_CONFIG_PATH) {
+        Ok(s) => s,
+        _ => String::new()
+    };
 
     // Set default settings if they are missing from modules file or if file is missing
     let mut output: Vec<String> = vec![buffer.clone()];
@@ -204,13 +184,8 @@ fn load_configuration(app: &mut Cursive) {
 
     // If we had to add settings, write them to file
     if output.len() > 1 {
-        let mut out_file = match File::create(&path) {
-            Ok(file) => file,
-            Err(why) => panic!("Couldn't create modules file: {:?}", why),
-        };
-
-        if let Err(why) = out_file.write_all(content.as_bytes()) {
-            panic!("Couldn't write to modules file: {:?}", why);
+        if let Err(why) = util::write_to_file(MODULE_CONFIG_PATH, &content) {
+            panic!("Couldn't write to module config file: {:?}", why);
         }
     }
 
