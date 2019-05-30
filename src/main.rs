@@ -65,7 +65,7 @@ fn check_for_token(app: &mut Cursive) {
     // Try to open token config file and read from it, if it exists
     let buffer = match util::get_file_contents(TOKENS_FILE_PATH) {
         Ok(s) => s,
-        _ => String::new()
+        _ => String::new(),
     };
 
     // If we didn't find a token
@@ -141,7 +141,10 @@ fn check_for_token(app: &mut Cursive) {
 
 fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
     let launch = Button::new("Launch bot", move |a| {
-        let token = &a.user_data::<Data>().expect("Expected user data to exist.").token;
+        let token = &a
+            .user_data::<Data>()
+            .expect("Expected user data to exist.")
+            .token;
         if let Err(why) = tx.send(token.to_string()) {
             panic!("Couldn't send token to bot thread: {:?}", why);
         }
@@ -166,7 +169,7 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
 fn load_configuration(app: &mut Cursive) {
     let buffer = match util::get_file_contents(MODULE_CONFIG_PATH) {
         Ok(s) => s,
-        _ => String::new()
+        _ => String::new(),
     };
 
     // Set default settings if they are missing from modules file or if file is missing
@@ -190,7 +193,9 @@ fn load_configuration(app: &mut Cursive) {
     }
 
     // Read module settings and prepare to store settings in user data
-    let user_data = &mut app.user_data::<Data>().expect("Expected user data to exist");
+    let user_data = &mut app
+        .user_data::<Data>()
+        .expect("Expected user data to exist");
     let file_entries = content.split(";");
 
     // Split each file entry into key-value pair

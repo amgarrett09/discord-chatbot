@@ -1,7 +1,7 @@
-use std::path::Path;
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::fs::File;
+use std::path::Path;
 
 pub fn get_file_contents(filename: &str) -> Result<String, io::Error> {
     let path = Path::new(filename);
