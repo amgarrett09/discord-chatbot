@@ -1,6 +1,6 @@
-use crate::ModuleStatus;
 use crate::util;
 use crate::Data;
+use crate::ModuleStatus;
 use cursive::traits::*;
 use cursive::views::{Button, Dialog, DummyView, LinearLayout, TextArea, TextView};
 use cursive::Cursive;
@@ -65,14 +65,16 @@ pub fn init_view(app: &mut Cursive, status: ModuleStatus) {
         .child(DummyView)
         .child(words_layout);
 
-    app.add_layer(Dialog::around(main_layout)
-        .title("Profanity filter configuration")
-        .button("Save", |a| {
-            save(a);
-        })
-        .button("Cancel", |a| {
-            a.pop_layer();
-        }));
+    app.add_layer(
+        Dialog::around(main_layout)
+            .title("Profanity filter configuration")
+            .button("Save", |a| {
+                save(a);
+            })
+            .button("Cancel", |a| {
+                a.pop_layer();
+            }),
+    );
 }
 
 fn save(app: &mut Cursive) {

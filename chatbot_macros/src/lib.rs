@@ -50,6 +50,9 @@ pub fn module_configuration(items: TokenStream) -> TokenStream {
                 Dialog::around(config_buttons)
                     .title(\"Bot configuration\")
                     .button(\"Back\", |a| {{
+                        if let Err(why) = save_configuration(a) {{
+                            panic!(\"Couldn't write to file: {{:?}}, why\");
+                        }}
                         a.pop_layer();
                     }})
             );

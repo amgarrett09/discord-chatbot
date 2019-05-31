@@ -10,6 +10,8 @@ use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, TextView
 use cursive::Cursive;
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io;
 use std::sync::mpsc;
 use std::thread;
 
@@ -232,4 +234,27 @@ fn load_configuration(app: &mut Cursive) {
             user_data.modules.insert(key.to_string(), status);
         }
     }
+}
+
+fn save_configuration(app: &mut Cursive) -> Result<File, io::Error> {
+    let module_settings = &app
+        .user_data::<Data>()
+        .expect("Expected user data to exist")
+        .modules;
+
+    let mut temp: Vec<String> = Vec::new();
+    for md in VALID_MODULES.iter() {
+        let status = match module_settings.get(*md) {
+            Some(s) => *s,
+            None => ModuleStatus::Disabled,
+        };
+
+        temp.push(format!("{}: {}", md, status.to_string()));
+    }
+
+    let content = temp.join(";\n");
+
+    let out = util::write_to_file(MODULE_CONFIG_PATH, &content)?;
+
+    Ok(out)
 }
