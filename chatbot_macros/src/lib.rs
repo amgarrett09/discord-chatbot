@@ -2,7 +2,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 
 #[proc_macro]
-pub fn register_modules(items: TokenStream) -> TokenStream {
+pub fn module_configuration(items: TokenStream) -> TokenStream {
     let s = items.to_string();
 
     // Parse tokens into args
@@ -39,7 +39,7 @@ pub fn register_modules(items: TokenStream) -> TokenStream {
     let boilerplate: Vec<String> = boilerplate_iter.collect();
 
     let config_function = format!(
-        "fn configuration(app: &mut Cursive) {{
+        "fn module_configuration(app: &mut Cursive) {{
             let modules = &app.user_data::<Data>().unwrap().modules;
 
             let mut config_buttons = LinearLayout::vertical();

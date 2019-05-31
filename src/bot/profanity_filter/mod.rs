@@ -125,7 +125,7 @@ fn save(app: &mut Cursive) {
     // Refresh config menu
     app.pop_layer();
     app.pop_layer();
-    crate::configuration(app);
+    crate::module_configuration(app);
 }
 
 mod wordlist {

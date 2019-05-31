@@ -14,14 +14,14 @@ use std::sync::mpsc;
 use std::thread;
 
 use bot::profanity_filter;
-use chatbot_macros::register_modules;
+use chatbot_macros::module_configuration;
 
 use module_status::ModuleStatus;
 
-// Enter the names of bot modules, without quotes, separated by spaces.
+// Enter the names of bot modules as arguments.
 // This translates into a constant array called VALID_MODULES and a function called
-// "configuration" which generates the module configuration view.
-register_modules!(profanity_filter);
+// "module_configuration" which generates the module configuration view.
+module_configuration!(profanity_filter);
 
 struct Data {
     token: String,
@@ -154,7 +154,7 @@ fn main_menu(app: &mut Cursive, tx: mpsc::Sender<String>) {
     });
 
     let configure = Button::new("Configure", |a| {
-        configuration(a);
+        module_configuration(a);
     });
 
     let layout = LinearLayout::vertical()
