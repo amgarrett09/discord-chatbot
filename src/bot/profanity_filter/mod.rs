@@ -9,7 +9,7 @@ use wordlist::WordList;
 const WORD_LIST_PATH: &'static str = "profanity_filter/wordlist.cfg";
 
 // Function that returns the front-end config view
-pub fn init_view(status: ModuleStatus) -> Dialog {
+pub fn init_view(app: &mut Cursive, status: ModuleStatus) {
     // Load word list contents
     let buffer = match util::get_file_contents(WORD_LIST_PATH) {
         Ok(s) => s,
@@ -65,14 +65,14 @@ pub fn init_view(status: ModuleStatus) -> Dialog {
         .child(DummyView)
         .child(words_layout);
 
-    Dialog::around(main_layout)
+    app.add_layer(Dialog::around(main_layout)
         .title("Profanity filter configuration")
         .button("Save", |a| {
             save(a);
         })
         .button("Cancel", |a| {
             a.pop_layer();
-        })
+        }));
 }
 
 fn save(app: &mut Cursive) {

@@ -27,7 +27,7 @@ pub fn module_configuration(items: TokenStream) -> TokenStream {
             let {n}_button = Button::new(
                 format!(\"{n}: {{}}\", {n}_status.to_string()),
                 move |a| {{
-                    a.add_layer({n}::init_view({n}_status));
+                    {n}::init_view(a, {n}_status);
                 }},
             );
 
