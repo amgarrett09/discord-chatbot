@@ -1,4 +1,6 @@
+use crate::module_status::ModuleStatus;
 use crate::util;
+use crate::Data;
 use cursive::traits::*;
 use cursive::views::{Button, Dialog, DummyView, LinearLayout, TextArea, TextView};
 use cursive::Cursive;
@@ -7,7 +9,7 @@ use wordlist::WordList;
 const WORD_LIST_PATH: &'static str = "profanity_filter/wordlist.cfg";
 
 // Function that returns the front-end config view
-pub fn init_view() -> Dialog {
+pub fn init_view(status: ModuleStatus) -> Dialog {
     // Load word list contents
     let buffer = match util::get_file_contents(WORD_LIST_PATH) {
         Ok(s) => s,
@@ -16,10 +18,24 @@ pub fn init_view() -> Dialog {
 
     let word_list: WordList = buffer.parse().expect("Failed to parse word list");
 
+    let status_text = status.to_string();
+
+    let status_indicator = LinearLayout::horizontal()
+        .child(TextView::new("Current status: "))
+        .child(TextView::new(status_text).with_id("status"));
+
     let on_off = LinearLayout::vertical()
-        .child(TextView::new("Enable or disable module"))
-        .child(Button::new("Turn on", |_| ()))
-        .child(Button::new("Turn off", |_| ()));
+        .child(status_indicator)
+        .child(Button::new("Turn on", |a| {
+            a.call_on_id("status", |view: &mut TextView| {
+                view.set_content(ModuleStatus::Enabled.to_string());
+            });
+        }))
+        .child(Button::new("Turn off", |a| {
+            a.call_on_id("status", |view: &mut TextView| {
+                view.set_content(ModuleStatus::Disabled.to_string());
+            });
+        }));
 
     let warn_words = TextArea::new()
         .content(word_list.warn_words.join("\n"))
@@ -60,6 +76,7 @@ pub fn init_view() -> Dialog {
 }
 
 fn save(app: &mut Cursive) {
+    // Grab filtered words and store in wordlist file
     let warn_words_area = app
         .find_id::<TextArea>("warn_words")
         .expect("Expected warn words text area to exist");
@@ -89,7 +106,26 @@ fn save(app: &mut Cursive) {
 
     let content = word_list.to_string();
     util::write_to_file(WORD_LIST_PATH, &content).expect("Failed to write word list file");
+
+    // Save module status
+    let status_text = app
+        .find_id::<TextView>("status")
+        .expect("Expected status text to exist");
+
+    let status: ModuleStatus = status_text
+        .get_content()
+        .source()
+        .parse()
+        .expect("Failed to parse: text should only be \"enabled\" or \"disabled\"");
+
+    app.with_user_data(|data: &mut Data| {
+        data.modules.insert("profanity_filter".to_string(), status);
+    });
+
+    // Refresh config menu
     app.pop_layer();
+    app.pop_layer();
+    crate::configuration(app);
 }
 
 mod wordlist {

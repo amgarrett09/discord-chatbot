@@ -1,4 +1,5 @@
 mod bot;
+mod module_status;
 mod util;
 
 #[macro_use]
@@ -15,10 +16,17 @@ use std::thread;
 use bot::profanity_filter;
 use chatbot_macros::register_modules;
 
+use module_status::ModuleStatus;
+
 // Enter the names of bot modules, without quotes, separated by spaces.
 // This translates into a constant array called VALID_MODULES and a function called
 // "configuration" which generates the module configuration view.
 register_modules!(profanity_filter);
+
+struct Data {
+    token: String,
+    modules: HashMap<String, ModuleStatus>,
+}
 
 const TOKENS_FILE_PATH: &'static str = "tokens.cfg";
 const MODULE_CONFIG_PATH: &'static str = "modules.cfg";
@@ -29,7 +37,7 @@ fn main() {
     // Initialize bot module settings
     let mut modules = HashMap::new();
     for md in VALID_MODULES.iter() {
-        modules.insert(md.to_string(), false);
+        modules.insert(md.to_string(), ModuleStatus::Disabled);
     }
 
     app.set_user_data(Data {
@@ -54,11 +62,6 @@ fn main() {
     check_for_token(&mut app);
 
     app.run();
-}
-
-struct Data {
-    token: String,
-    modules: HashMap<String, bool>,
 }
 
 fn check_for_token(app: &mut Cursive) {
@@ -219,11 +222,14 @@ fn load_configuration(app: &mut Cursive) {
 
     for pair in pairs {
         let (key, value) = pair;
-        let bool_value = if value == "enabled" { true } else { false };
+        let status = match value.parse() {
+            Ok(s) => s,
+            Err(_) => ModuleStatus::Disabled,
+        };
 
         // Update module setting if key is valid
         if user_data.modules.contains_key(key) {
-            user_data.modules.insert(key.to_string(), bool_value);
+            user_data.modules.insert(key.to_string(), status);
         }
     }
 }
