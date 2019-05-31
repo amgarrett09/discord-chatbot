@@ -19,20 +19,20 @@ pub fn module_configuration(items: TokenStream) -> TokenStream {
 
     let boilerplate_iter = names.iter().map(|name| {
         format!(
-            "let {}_status = match modules.get(\"{}\") {{
+            "let {n}_status = match modules.get(\"{n}\") {{
                 Some(status) => *status,
                 _ => ModuleStatus::Disabled
             }};
 
-            let {}_button = Button::new(
-                format!(\"{}: {{}}\", {}_status.to_string()),
+            let {n}_button = Button::new(
+                format!(\"{n}: {{}}\", {n}_status.to_string()),
                 move |a| {{
-                    a.add_layer({}::init_view({}_status));
+                    a.add_layer({n}::init_view({n}_status));
                 }},
             );
 
-            config_buttons.add_child({}_button);",
-            name, name, name, name, name, name, name, name
+            config_buttons.add_child({n}_button);",
+            n = name
         )
     });
 
