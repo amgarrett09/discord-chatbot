@@ -1,5 +1,5 @@
 mod bot;
-mod module_status;
+mod types;
 mod util;
 
 #[macro_use]
@@ -16,7 +16,7 @@ use std::thread;
 use bot::profanity_filter;
 use chatbot_macros::module_configuration;
 
-use module_status::ModuleStatus;
+pub use types::module_status::ModuleStatus;
 
 // Enter the names of bot modules as arguments.
 // This translates into a constant array called VALID_MODULES and a function called

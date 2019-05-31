@@ -1,4 +1,4 @@
-use crate::module_status::ModuleStatus;
+use crate::ModuleStatus;
 use crate::util;
 use crate::Data;
 use cursive::traits::*;
