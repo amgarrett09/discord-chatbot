@@ -1,4 +1,5 @@
 mod bot;
+mod error_views;
 mod types;
 mod util;
 
@@ -97,13 +98,22 @@ fn check_for_token(app: &mut Cursive) {
         let dialog = Dialog::around(layout)
             .title("Enter bot's name")
             .button("Ok", |a| {
-                let name = a
-                    .call_on_id("app_name", |view: &mut EditView| view.get_content())
-                    .expect("Expected edit view for app name to exist.");
+                let name = match a.call_on_id("app_name", |view: &mut EditView| view.get_content())
+                {
+                    Some(v) => v,
+                    None => {
+                        error_views::panic(a, "Expected app name edit view to exist");
+                        return;
+                    }
+                };
 
-                let token = a
-                    .call_on_id("token", |view: &mut EditView| view.get_content())
-                    .expect("Expected edit view for token to exist.");
+                let token = match a.call_on_id("token", |view: &mut EditView| view.get_content()) {
+                    Some(v) => v,
+                    None => {
+                        error_views::panic(a, "Expected token edit view to exist");
+                        return;
+                    }
+                };
 
                 ok(a, &name, &token);
             })

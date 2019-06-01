@@ -1,3 +1,4 @@
+use crate::error_views;
 use crate::util;
 use crate::Data;
 use crate::ModuleStatus;
@@ -79,12 +80,21 @@ pub fn init_view(app: &mut Cursive, status: ModuleStatus) {
 
 fn save(app: &mut Cursive) {
     // Grab filtered words and store in wordlist file
-    let warn_words_area = app
-        .find_id::<TextArea>("warn_words")
-        .expect("Expected warn words text area to exist");
-    let kick_words_area = app
-        .find_id::<TextArea>("kick_words")
-        .expect("Expected kick words text area to exist");
+    let warn_words_area = match app.find_id::<TextArea>("warn_words") {
+        Some(v) => v,
+        None => {
+            error_views::panic(app, "Expected warn words text area to exist");
+            return;
+        }
+    };
+
+    let kick_words_area = match app.find_id::<TextArea>("kick_words") {
+        Some(v) => v,
+        None => {
+            error_views::panic(app, "Expected kick words text area to exist");
+            return;
+        }
+    };
 
     let warn_words: Vec<String> = warn_words_area
         .get_content()
@@ -110,15 +120,21 @@ fn save(app: &mut Cursive) {
     util::write_to_file(WORD_LIST_PATH, &content).expect("Failed to write word list file");
 
     // Save module status
-    let status_text = app
-        .find_id::<TextView>("status")
-        .expect("Expected status text to exist");
+    let status_text = match app.find_id::<TextView>("status") {
+        Some(v) => v,
+        None => {
+            error_views::panic(app, "Expected status text to exist");
+            return;
+        }
+    };
 
-    let status: ModuleStatus = status_text
-        .get_content()
-        .source()
-        .parse()
-        .expect("Failed to parse: text should only be \"enabled\" or \"disabled\"");
+    let status: ModuleStatus = match status_text.get_content().source().parse() {
+        Ok(s) => s,
+        _ => {
+            error_views::panic(app, "Failed to parse status text.");
+            return;
+        }
+    };
 
     app.with_user_data(|data: &mut Data| {
         data.modules.insert("profanity_filter".to_string(), status);
