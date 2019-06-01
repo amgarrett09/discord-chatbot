@@ -188,64 +188,50 @@ fn load_configuration(app: &mut Cursive) {
         _ => String::new(),
     };
 
-    // Set default settings if they are missing from modules file or if file is missing
-    let mut output: Vec<String> = vec![buffer.clone()];
+    let module_settings = &mut app.user_data::<Data>()
+        .expect("Expected user data to exist")
+        .modules;
 
-    for module in VALID_MODULES.iter() {
-        let key = format!("{}: ", module);
-
-        if !buffer.contains(&key) {
-            output.push(format!("\n{}disabled", key));
-        }
+    // Initialize module settings
+    for md in VALID_MODULES.iter() {
+        module_settings.insert(md.to_string(), ModuleStatus::Disabled);
     }
 
-    let content = output.join(";");
+    // We're done if we failed to read config file
+    if buffer.is_empty() { return; }
 
-    // If we had to add settings, write them to file
-    if output.len() > 1 {
-        if util::write_to_file(MODULE_CONFIG_PATH, &content).is_err() {
-            error_views::config_write_err(app);
-            return;
-        }
-    }
+    // Otherwise, parse the contents of config file
+    let file_settings = buffer.split(";");
+    let pairs = file_settings.map(|setting| {
+        let mut pair_iter = setting.split(":");
 
-    // Read module settings and prepare to store settings in user data
-    let user_data = &mut app
-        .user_data::<Data>()
-        .expect("Expected user data to exist");
-    let file_entries = content.split(";");
-
-    // Split each file entry into key-value pair
-    let pairs = file_entries.map(|entry| {
-        let mut elements = entry.split(":");
-
-        // Making sure each pair has two elements
-        let key = match elements.next() {
-            Some(key) => key.trim(),
-            None => "",
+        // Ensuring there is exactly one key and one value
+        let key = match pair_iter.next() {
+            Some(k) => k,
+            None => ""
+        };
+        let value = match pair_iter.next() {
+            Some(v) => v,
+            None => ""
         };
 
-        let value = match elements.next() {
-            Some(value) => value.trim(),
-            None => "",
-        };
-
-        let pair = (key, value);
-        pair
+        (key, value)
     });
 
+    // Save settings in user data if the settings are valid
     for pair in pairs {
         let (key, value) = pair;
-        let status = match value.parse() {
+        let key = key.trim();
+        let value: ModuleStatus = match value.trim().parse() {
             Ok(s) => s,
-            Err(_) => ModuleStatus::Disabled,
+            _ => ModuleStatus::Disabled
         };
 
-        // Update module setting if key is valid
-        if user_data.modules.contains_key(key) {
-            user_data.modules.insert(key.to_string(), status);
+        if !module_settings.get(key).is_none() {
+            module_settings.insert(key.to_string(), value);
         }
     }
+
 }
 
 fn save_configuration(app: &mut Cursive) -> Result<File, io::Error> {
