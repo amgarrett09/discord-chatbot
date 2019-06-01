@@ -117,7 +117,10 @@ fn save(app: &mut Cursive) {
     };
 
     let content = word_list.to_string();
-    util::write_to_file(WORD_LIST_PATH, &content).expect("Failed to write word list file");
+    if util::write_to_file(WORD_LIST_PATH, &content).is_err() {
+        error_views::config_write_err(app);
+        return;
+    }
 
     // Save module status
     let status_text = match app.find_id::<TextView>("status") {

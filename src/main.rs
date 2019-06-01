@@ -137,8 +137,9 @@ fn check_for_token(app: &mut Cursive) {
     fn ok(app: &mut Cursive, name: &str, token: &str) {
         let s: String = format!("{}: {}\n", name, token);
 
-        if let Err(why) = util::write_to_file(TOKENS_FILE_PATH, &s) {
-            panic!("Couldn't write to tokens config file: {:?}", why);
+        if util::write_to_file(TOKENS_FILE_PATH, &s).is_err() {
+            error_views::config_write_err(app);
+            return;
         }
 
         // Save token in user data
@@ -202,8 +203,9 @@ fn load_configuration(app: &mut Cursive) {
 
     // If we had to add settings, write them to file
     if output.len() > 1 {
-        if let Err(why) = util::write_to_file(MODULE_CONFIG_PATH, &content) {
-            panic!("Couldn't write to module config file: {:?}", why);
+        if util::write_to_file(MODULE_CONFIG_PATH, &content).is_err() {
+            error_views::config_write_err(app);
+            return;
         }
     }
 

@@ -10,3 +10,19 @@ pub fn panic(app: &mut Cursive, err_text: &str) {
 
     app.add_layer(dialog);
 }
+
+pub fn config_write_err(app: &mut Cursive) {
+    let text =
+        "Failed to write config file.\n\nYou can continue, and your settings will \
+         remain for the current session, but they will not be remembered next time you start \
+         the app.\n\nContinue?";
+
+    let dialog = Dialog::text(text)
+        .button("Yes", |a| {
+            a.pop_layer();
+            a.pop_layer();
+        })
+        .button("No", Cursive::quit);
+
+    app.add_layer(dialog);
+}
