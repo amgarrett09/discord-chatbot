@@ -27,7 +27,7 @@ pub fn module_configuration(items: TokenStream) -> TokenStream {
             let {n}_button = Button::new(
                 format!(\"{n}: {{}}\", {n}_status.to_string()),
                 move |a| {{
-                    {n}::init_view(a, {n}_status);
+                    {n}::config_view(a, {n}_status);
                 }},
             );
 
@@ -49,7 +49,7 @@ pub fn module_configuration(items: TokenStream) -> TokenStream {
             app.add_layer(
                 Dialog::around(config_buttons)
                     .title(\"Bot configuration\")
-                    .button(\"Back\", |a| {{
+                    .button(\"Save\", |a| {{
                         if let Err(why) = save_configuration(a) {{
                             panic!(\"Couldn't write to file: {{:?}}, why\");
                         }}

@@ -10,7 +10,7 @@ use wordlist::WordList;
 const WORD_LIST_PATH: &'static str = "profanity_filter/wordlist.cfg";
 
 // Function that returns the front-end config view
-pub fn init_view(app: &mut Cursive, status: ModuleStatus) {
+pub fn config_view(app: &mut Cursive, status: ModuleStatus) {
     // Load word list contents
     let buffer = match util::get_file_contents(WORD_LIST_PATH) {
         Ok(s) => s,
